@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: f7769b1fc067cae44b63ccdcc8288127
+timeCreated: 1531635139
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 165807
+  packageName: Egypt Pack - Spider Demo
+  packageVersion: 1.0
+  assetPath: Assets/EgyptMonsters/Prefabs/Spider/Spider_Flower.prefab
+  uploadId: 370606
