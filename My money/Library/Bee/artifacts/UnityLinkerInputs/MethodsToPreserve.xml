@@ -1,0 +1,72 @@
+<linker>
+	<assembly fullname="Assembly-CSharp" ignoreIfMissing="1">
+		<type fullname="MainMenuUI">
+			<method name="OnClick_GoToSelection"/>
+			<method name="OnClick_NextPet"/>
+			<method name="OnClick_PrevPet"/>
+			<method name="OnClick_StartClient"/>
+			<method name="OnClick_StartHost"/>
+		</type>
+		<type fullname="RadialMenuBridge">
+			<method name="Action_BackToMain"/>
+			<method name="Action_Cancel"/>
+			<method name="Action_Emote_Angry"/>
+			<method name="Action_Emote_Cry"/>
+			<method name="Action_Emote_Cry"/>
+			<method name="Action_Emote_Cry"/>
+			<method name="Action_Emote_Smile"/>
+			<method name="Action_Heal"/>
+			<method name="Action_OpenEmoteMenu"/>
+			<method name="Action_OpenGuide"/>
+			<method name="Action_UseItem"/>
+		</type>
+	</assembly>
+	<assembly fullname="Fusion.Unity" ignoreIfMissing="1">
+		<type fullname="Fusion.Statistics.FusionNetworkObjectStatsGraphCombine">
+			<method name="DestroyCombinedGraph"/>
+			<method name="ToggleRenderDisplay"/>
+		</type>
+		<type fullname="Fusion.Statistics.FusionStatsCanvas">
+			<method name="SnapPanelBackToOriginPos"/>
+		</type>
+		<type fullname="Fusion.Statistics.FusionStatsConfig">
+			<method name="SetWorldCanvasScale"/>
+			<method name="ToggleConfigPanel"/>
+			<method name="ToggleUseWorldAnchor"/>
+		</type>
+		<type fullname="Fusion.Statistics.FusionStatsGraphBase">
+			<method name="ToggleRenderDisplay"/>
+		</type>
+	</assembly>
+	<assembly fullname="Unity.RenderPipelines.Core.Runtime" ignoreIfMissing="1">
+		<type fullname="UnityEngine.Rendering.UI.DebugUIHandlerButton">
+			<method name="OnAction"/>
+		</type>
+		<type fullname="UnityEngine.Rendering.UI.DebugUIHandlerIntField">
+			<method name="OnDecrement"/>
+			<method name="OnDecrement"/>
+			<method name="OnIncrement"/>
+			<method name="OnIncrement"/>
+		</type>
+		<type fullname="UnityEngine.Rendering.UI.DebugUIHandlerObjectPopupField">
+			<method name="OnDecrement"/>
+			<method name="OnIncrement"/>
+		</type>
+		<type fullname="UnityEngine.Rendering.UI.DebugUIHandlerPanel">
+			<method name="OnScrollbarClicked"/>
+			<method name="OnScrollbarClicked"/>
+			<method name="ResetDebugManager"/>
+		</type>
+		<type fullname="UnityEngine.Rendering.UI.DebugUIHandlerUIntField">
+			<method name="OnDecrement"/>
+			<method name="OnDecrement"/>
+			<method name="OnIncrement"/>
+			<method name="OnIncrement"/>
+		</type>
+	</assembly>
+	<assembly fullname="UnityEngine.CoreModule" ignoreIfMissing="1">
+		<type fullname="UnityEngine.GameObject">
+			<method name="SetActive"/>
+		</type>
+	</assembly>
+</linker>
