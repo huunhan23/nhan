@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 203d9b2c9f1d24a26975befaca1fca1c
+timeCreated: 1462845872
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 57458
+  packageName: Iguana
+  packageVersion: 1.1
+  assetPath: Assets/JSLizards/Iguana/Scenes/SmallFriction.physicMaterial
+  uploadId: 469445

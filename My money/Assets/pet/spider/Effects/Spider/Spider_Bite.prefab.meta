@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 4a12a967a1575a74790707c2027e5b8e
+timeCreated: 1531196708
+licenseType: Store
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 165807
+  packageName: Egypt Pack - Spider Demo
+  packageVersion: 1.0
+  assetPath: Assets/EgyptMonsters/Effects/Spider/Spider_Bite.prefab
+  uploadId: 370606
