@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 52c52015a963f410086c5991fd209a85
+timeCreated: 1462452039
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 57458
+  packageName: Iguana
+  packageVersion: 1.1
+  assetPath: Assets/JSLizards/Iguana/Materials/BakedIguanaLOD1.mat
+  uploadId: 469445

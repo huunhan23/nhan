@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 6852a25e8757b48f083aba32530ba75a
+timeCreated: 1462454288
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 57458
+  packageName: Iguana
+  packageVersion: 1.1
+  assetPath: Assets/JSLizards/Iguana/Scenes/IguanaSoil.mat
+  uploadId: 469445
