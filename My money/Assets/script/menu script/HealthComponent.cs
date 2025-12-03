@@ -4,105 +4,156 @@ using UnityEngine.UI;
 
 public class HealthComponent : NetworkBehaviour
 {
+    // ==================== CÀI ĐẶT ====================
     [Header("Cài đặt Máu")]
     public float maxHealth = 100f;
-    
-    [Header("Loại Đối Tượng")]
-    public bool isPet = false; // Tích vào nếu đây là Pet
+    public bool isPet = false; 
 
-    // Biến máu đồng bộ qua mạng
+    [Header("Hiệu ứng Khiên")]
+    public GameObject shieldPrefab; 
+    public Vector3 shieldOffset = new Vector3(0, 1f, 0); 
+    [Networked] public NetworkBool IsWet { get; set; } // Trạng thái bị ướt
+    [Networked] public float SpeedMultiplier { get; set; } = 1.0f; // Hệ số tốc độ (1 = bình thường, 0.5 = chậm)
+
+    // ==================== BIẾN ĐỒNG BỘ ====================
     [Networked] public float CurrentHealth { get; set; }
-    
-    private ChangeDetector _changes;
+    [Networked] public NetworkBool HasShield { get; set; } 
 
+    private ChangeDetector _changes;
+    private GameObject _currentShieldEffect; 
+
+    // ==================== KHỞI TẠO ====================
     public override void Spawned()
     {
         _changes = GetChangeDetector(ChangeDetector.Source.SimulationState);
         
-        // Chỉ Server mới được set máu ban đầu
         if (Object.HasStateAuthority)
         {
             CurrentHealth = maxHealth;
+            HasShield = false;
+
+            IsWet = false;
+            SpeedMultiplier = 1.0f;
         }
         
+        
         UpdateUI();
+        UpdateShieldVisual(); 
+        UpdateStatusUI();
     }
 
+    // ==================== RENDER & UI ====================
     public override void Render()
     {
-        // Lắng nghe sự thay đổi của máu
         foreach (var change in _changes.DetectChanges(this))
         {
-            if (change == nameof(CurrentHealth))
-            {
-                UpdateUI();
-                // ĐÃ XÓA DÒNG CheckDeath() GÂY LỖI
-            }
+            if (change == nameof(CurrentHealth)) UpdateUI();
+            if (change == nameof(HasShield)) UpdateShieldVisual();
+            if (change == nameof(IsWet)) UpdateStatusUI();
         }
     }
 
-    // === HÀM CẬP NHẬT UI ===
-    void UpdateUI()
+    private void UpdateShieldVisual()
     {
-        if (GameUIManager.Instance == null) return;
-
-        // Logic xác định Phe 1 hay Phe 2
-        // Giả định Host (PlayerId 1) là Phe 1
-        bool isPlayer1Side = (Object.InputAuthority.PlayerId == 1) || (Object.InputAuthority == Runner.LocalPlayer && Runner.IsServer);
-
-        if (isPet)
+        if (HasShield)
         {
-            GameUIManager.Instance.UpdatePetHealth(isPlayer1Side, CurrentHealth, maxHealth);
+            if (_currentShieldEffect == null && shieldPrefab != null)
+            {
+                _currentShieldEffect = Instantiate(shieldPrefab, transform.position + shieldOffset, Quaternion.identity);
+                _currentShieldEffect.transform.SetParent(transform); 
+                _currentShieldEffect.transform.localPosition = shieldOffset; 
+            }
         }
         else
         {
-            GameUIManager.Instance.UpdatePlayerHealth(isPlayer1Side, CurrentHealth, maxHealth);
+            if (_currentShieldEffect != null)
+            {
+                Destroy(_currentShieldEffect);
+                _currentShieldEffect = null;
+            }
         }
     }
-// === THÊM HÀM NÀY VÀO HealthComponent.cs ===
+void UpdateStatusUI()
+    {
+        if (GameUIManager.Instance == null) return;
+
+        // Logic xác định Phe (Copy từ hàm UpdateUI cũ)
+        bool isPlayer1Side = (Object.InputAuthority.PlayerId == 1) || (Object.InputAuthority == Runner.LocalPlayer && Runner.IsServer);
+
+        // Gọi sang UI Manager
+        // (Lưu ý: Hiện tại ta chỉ làm cho Player, nếu Pet bị ướt muốn hiện thì cần thêm logic UI cho Pet)
+        if (!isPet)
+        {
+            GameUIManager.Instance.UpdateStatusUI(isPlayer1Side, IsWet);
+        }
+    }
+    void UpdateUI()
+    {
+        if (GameUIManager.Instance == null) return;
+        bool isPlayer1Side = (Object.InputAuthority.PlayerId == 1) || (Object.InputAuthority == Runner.LocalPlayer && Runner.IsServer);
+
+        if (isPet) GameUIManager.Instance.UpdatePetHealth(isPlayer1Side, CurrentHealth, maxHealth);
+        else GameUIManager.Instance.UpdatePlayerHealth(isPlayer1Side, CurrentHealth, maxHealth);
+    }
+
+    // ==================== LOGIC GAMEPLAY (SERVER) ====================
+
+    // 1. HÀM BẬT KHIÊN (Dùng cho Skill)
+    public void ActivateShield()
+    {
+        if (Object.HasStateAuthority)
+        {
+            HasShield = true;
+        }
+    }
+
+    // 2. HÀM HỒI MÁU (Dùng cho Item - ĐÂY LÀ HÀM BẠN THIẾU)
     public void Heal(float amount)
     {
-        if (!Object.HasStateAuthority) return; // Chỉ Server mới được hồi máu
+        if (!Object.HasStateAuthority) return;
 
         CurrentHealth += amount;
-        
-        // Không cho máu vượt quá tối đa
         if (CurrentHealth > maxHealth) 
         {
-            CurrentHealth = maxHealth; 
+            CurrentHealth = maxHealth;
         }
-        
-        // Debug.Log($"{gameObject.name} đã hồi {amount} máu.");
+        // Debug.Log($"{gameObject.name} hồi {amount} máu.");
     }
-    // === HÀM NHẬN SÁT THƯƠNG (Server Only) ===
+public void SetStatus(bool wet, float speedMult)
+    {
+        if (Object.HasStateAuthority)
+        {
+            IsWet = wet;
+            SpeedMultiplier = speedMult;
+        }
+    }
+    // 3. HÀM NHẬN SÁT THƯƠNG
     public void TakeDamage(float amount)
     {
         if (!Object.HasStateAuthority) return;
 
+        // Nếu có khiên -> Chặn đòn
+        if (HasShield)
+        {
+            HasShield = false; // Vỡ khiên
+            return; 
+        }
+
+        // Trừ máu
         if (CurrentHealth > 0)
         {
             CurrentHealth -= amount;
-
-            // === BÁO CÁO CHO TRỌNG TÀI (MATCH MANAGER) ===
+            
             if (MatchManager.Instance != null)
             {
-                // Xác định ai là người bị đánh
                 bool isP1Victim = (Object.InputAuthority.PlayerId == 1);
-                
-                // Ghi nhận sát thương (Nếu P1 bị đánh -> P2 gây dame)
                 MatchManager.Instance.RecordDamage(!isP1Victim, amount);
-                
-                // Cập nhật máu lên bảng điểm (Chỉ tính Player chết, Pet chết không tính thua)
-                if (!isPet)
-                {
-                    MatchManager.Instance.UpdateHP(isP1Victim, CurrentHealth);
-                }
+                if (!isPet) MatchManager.Instance.UpdateHP(isP1Victim, CurrentHealth);
             }
-            // =============================================
         }
+
         
         
-        // Logic chết đơn giản: Tắt object nếu hết máu
         if (CurrentHealth <= 0)
         {
             gameObject.SetActive(false);

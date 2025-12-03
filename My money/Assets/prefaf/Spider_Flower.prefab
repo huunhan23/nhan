@@ -153,7 +153,7 @@ Rigidbody:
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
   m_UseGravity: 1
-  m_IsKinematic: 0
+  m_IsKinematic: 1
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -192,8 +192,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PetAI
   currentState: 0
-  skill1CooldownTime: 3
-  skill2CooldownTime: 5
   player: {fileID: 0}
   mountPoint: {fileID: 4932750507565183079}
   attackRange: 2
@@ -201,10 +199,15 @@ MonoBehaviour:
   leashDistance: 15
   targetScanRadius: 20
   arrivalDistance: 1.5
-  animator: {fileID: 0}
-  turnSpeed: 10
+  petAvatar: {fileID: 21300000, guid: 162ae2211cca2b34289f850744bd4da7, type: 3}
+  skill1Icon: {fileID: 21300000, guid: d0be69777c3ac284bbaf7d7e68ae721f, type: 3}
+  skill2Icon: {fileID: 21300000, guid: 71c2b992fe1b677409cb62416d80f86c, type: 3}
   skill1: {fileID: 6234728806827232797}
   skill2: {fileID: 5592939873239889075}
+  skill1CooldownTime: 3
+  skill2CooldownTime: 5
+  animator: {fileID: 0}
+  turnSpeed: 10
 --- !u!114 &1933128953766014711
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -387,7 +390,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
   maxHealth: 100
   isPet: 1
+  shieldPrefab: {fileID: 0}
+  shieldOffset: {x: 0, y: 1, z: 0}
+  _IsWet:
+    _value: 0
+  _SpeedMultiplier: 1
   _CurrentHealth: 1000
+  _HasShield:
+    _value: 0
 --- !u!1 &565119327106257458
 GameObject:
   m_ObjectHideFlags: 0

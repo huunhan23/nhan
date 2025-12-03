@@ -42,13 +42,35 @@ public class MatchManager : NetworkBehaviour
             GameUIManager.Instance.UpdateTimer(time);
         }
 
-        // Chỉ Server xử lý logic kết thúc
-        if (Runner.IsServer && !IsGameEnded)
+       if (Runner.IsServer)
         {
-            // 1. Kiểm tra hết giờ
-            if (MatchTimer.Expired(Runner))
+            if (!IsGameEnded)
             {
-                EndGameByTimeout();
+                // Kiểm tra nếu Timer chưa chạy (nghĩa là trận chưa bắt đầu)
+                if (MatchTimer.IsRunning == false)
+                {
+                    // Đếm số lượng PlayerController thực tế trong Scene
+                    int playersInScene = 0;
+                    foreach(var p in Runner.ActivePlayers)
+                    {
+                        // Kiểm tra xem người chơi này đã có Object nhân vật chưa
+                        if(Runner.GetPlayerObject(p) != null) playersInScene++;
+                    }
+
+                    // Nếu đủ 2 người ĐÃ CÓ NHÂN VẬT -> Bắt đầu
+                    if (playersInScene >= 2)
+                    {
+                        Debug.Log("Đủ 2 người! Bắt đầu đếm giờ.");
+                        MatchTimer = TickTimer.CreateFromSeconds(Runner, matchTime);
+                        
+                        // (Tùy chọn) Gọi RPC để hiện thông báo "FIGHT!"
+                    }
+                }
+                // Nếu Timer đang chạy và hết giờ -> Kết thúc
+                else if (MatchTimer.Expired(Runner))
+                {
+                    EndGameByTimeout();
+                }
             }
         }
     }

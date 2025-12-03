@@ -1,14 +1,19 @@
 using UnityEngine;
 using Fusion;
-using TMPro; 
-using UnityEngine.EventSystems; // <--- 1. QUAN TRỌNG: THÊM DÒNG NÀY
+using TMPro;
+using UnityEngine.EventSystems; // Cần để bỏ chọn nút
 
 public class RadialMenuBridge : MonoBehaviour
 {
+    // Biến static để các script khác biết menu đang mở hay đóng
+    public static bool IsMenuOpen = false;
+
     private PlayerController _localPlayer;
 
     [Header("UI Managers")]
     public PiUIManager piManager; 
+    
+    // Tên menu phải trùng trong Pi UI Manager
     public string mainMenuName = "PlayerMenu"; 
     public string emoteMenuName = "EmoteMenu"; 
 
@@ -38,71 +43,52 @@ public class RadialMenuBridge : MonoBehaviour
              itemCountText.text = "x" + _localPlayer.itemCount;
         }
 
-        // 3. Bật Menu Chính bằng Tab
+        // 3. Bật/Tắt Menu bằng Tab
         if (Input.GetKeyDown(KeyCode.Tab))
         {
-            // Đảm bảo không có UI nào khác đang chặn (ví dụ bảng Guide)
-            if (gameUIManager != null && gameUIManager.IsUIOpen()) return;
+            // Nếu menu đang mở (hoặc menu con đang mở) -> Đóng lại
+            if (piManager.PiOpened(mainMenuName) || piManager.PiOpened(emoteMenuName))
+            {
+                CloseAllMenus(); 
+            }
+            else
+            {
+                // Nếu đang đóng -> Mở ra
+                // (Kiểm tra xem có bảng UI nào khác đang chặn không)
+                if (gameUIManager != null && gameUIManager.IsUIOpen()) return;
 
-            // Reset về menu chính
-            if(piManager.PiOpened(emoteMenuName)) piManager.ChangeMenuState(emoteMenuName); // Tắt menu con nếu có
-            
-            // Bật menu chính
-            piManager.ChangeMenuState(mainMenuName, new Vector2(Screen.width / 2, Screen.height / 2));
-            
-            UnlockCursor(); // Hiện chuột để chọn
+                OpenMenu();
+            }
         }
-        
     }
 
     // ========================================================
-    // CÁC HÀM HÀNH ĐỘNG (GỌI TỪ PI UI)
+    // CÁC HÀM HÀNH ĐỘNG (GẮN VÀO PI UI)
     // ========================================================
-
-    // --- NHÓM 1: CÁC HÀNH ĐỘNG XONG LÀ QUAY VỀ GAME (ẨN CHUỘT) ---
 
     public void Action_UseItem()
     {
         if (_localPlayer) _localPlayer.TryUseItem(); 
-        CloseAllMenus();
-        // Xong việc -> Khóa chuột
+        CloseAllMenus(); 
     }
 
     public void Action_Heal()
     {
-        if (_localPlayer) _localPlayer.Rpc_UseHeal(); 
-        CloseAllMenus();
-         // Xong việc -> Khóa chuột
+        if (_localPlayer) _localPlayer.Rpc_UseShield(); // Đã đổi thành Shield
+        CloseAllMenus(); 
     }
 
     public void Action_Cancel()
     {
-        CloseAllMenus(); // Hủy -> Khóa chuột
+        CloseAllMenus(); 
     }
 
-    // Các hàm Emote con
-    public void Action_Emote_Smile() { PlayEmote(0); }
-    public void Action_Emote_Cry()   { PlayEmote(1); }
-    public void Action_Emote_Angry() { PlayEmote(2); }
-
-    void PlayEmote(int emoteID)
-    {
-        if (_localPlayer) _localPlayer.Rpc_PlayEmote(emoteID);
-        CloseAllMenus();
-        // Chọn emote xong -> Khóa chuột
-    }
-
-
-    // --- NHÓM 2: CÁC HÀNH ĐỘNG MỞ MENU KHÁC (GIỮ CHUỘT) ---
+    // --- HÀM MỞ MENU CON ---
 
     public void Action_OpenGuide()
     {
-        // Tắt menu tròn (nhưng không khóa chuột)
-        if(piManager.PiOpened(mainMenuName)) piManager.ChangeMenuState(mainMenuName);
-        if(piManager.PiOpened(emoteMenuName)) piManager.ChangeMenuState(emoteMenuName);
-        
-        // Mở bảng hướng dẫn
-        if(gameUIManager) gameUIManager.OpenGuide();
+        CloseAllMenus(); // Đóng menu tròn
+        if(gameUIManager) gameUIManager.OpenGuide(); // Mở bảng hướng dẫn
     }
 
     public void Action_OpenEmoteMenu()
@@ -113,8 +99,8 @@ public class RadialMenuBridge : MonoBehaviour
         // Mở menu Emote
         piManager.ChangeMenuState(emoteMenuName, new Vector2(Screen.width / 2, Screen.height / 2));
         
-        // Vẫn giữ chuột để chọn tiếp
-        UnlockCursor(); 
+        // Đảm bảo chuột vẫn mở
+        UnlockCursor();
     }
 
     public void Action_BackToMain()
@@ -123,32 +109,50 @@ public class RadialMenuBridge : MonoBehaviour
         if(piManager.PiOpened(emoteMenuName)) piManager.ChangeMenuState(emoteMenuName);
         
         // Mở lại menu Chính
-        piManager.ChangeMenuState(mainMenuName, new Vector2(Screen.width / 2, Screen.height / 2));
-        
-        // Vẫn giữ chuột
-        UnlockCursor();
+        OpenMenu();
+    }
+
+    // --- CÁC HÀM EMOTE ---
+    public void Action_Emote_Smile() { PlayEmote(0); } 
+    public void Action_Emote_Cry()   { PlayEmote(1); } 
+    public void Action_Emote_Angry() { PlayEmote(2); } 
+public void Action_Emote_3() { PlayEmote(3); } 
+    public void Action_Emote_4() { PlayEmote(4); }
+    void PlayEmote(int emoteID)
+    {
+        if (_localPlayer) _localPlayer.Rpc_PlayEmote(emoteID);
+        CloseAllMenus(); 
     }
 
     // ========================================================
-    // HÀM QUẢN LÝ CHUỘT (QUAN TRỌNG)
+    // CÁC HÀM QUẢN LÝ ĐÓNG/MỞ (BẠN BỊ THIẾU PHẦN NÀY)
     // ========================================================
 
-    // Hàm đóng tất cả và KHÓA CHUỘT (Về chế độ bắn súng)
-   void CloseAllMenus()
+    void OpenMenu()
+    {
+        piManager.ChangeMenuState(mainMenuName, new Vector2(Screen.width / 2, Screen.height / 2));
+        IsMenuOpen = true;
+        UnlockCursor();
+    }
+
+    // Hàm này được gọi khi chọn xong: Đóng menu, nhưng KHÔNG khóa chuột (theo ý bạn)
+    void CloseAllMenus()
     {
         // 1. Đóng các menu PiUI
         if(piManager.PiOpened(mainMenuName)) piManager.ChangeMenuState(mainMenuName);
         if(piManager.PiOpened(emoteMenuName)) piManager.ChangeMenuState(emoteMenuName);
 
-        // 2. Bỏ chọn nút UI (Để tránh lỗi kẹt phím Enter/Space vào nút vừa bấm)
-        if (UnityEngine.EventSystems.EventSystem.current != null) 
-            UnityEngine.EventSystems.EventSystem.current.SetSelectedGameObject(null);
+        // 2. Bỏ chọn nút UI (Để tránh lỗi kẹt phím Enter)
+        if (EventSystem.current != null) 
+            EventSystem.current.SetSelectedGameObject(null);
 
-        // 3. TUYỆT ĐỐI KHÔNG CÓ DÒNG KHÓA CHUỘT Ở ĐÂY
-        // Xóa các dòng: Cursor.lockState = ...; Cursor.visible = ...;
+        IsMenuOpen = false;
+
+        // LƯU Ý: Không khóa chuột ở đây để giữ phong cách MMORPG
+        // Chuột sẽ được PlayerController khóa khi bạn giữ Chuột Phải.
     }
 
-    // Hàm mở chuột (Để chọn menu)
+    // Hàm hiện chuột
     void UnlockCursor()
     {
         Cursor.lockState = CursorLockMode.None;

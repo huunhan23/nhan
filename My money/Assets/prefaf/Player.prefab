@@ -524,18 +524,19 @@ MonoBehaviour:
   _currentPet: {fileID: 0}
   _aimPoint: {x: 0, y: 0, z: 0}
   _SelectedPetIndex: 0
+  _SelectedAvatarIndex: 1
   _PlayerName:
     _length: 0
     _data:
       Data: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
   _itemCount: 0
+  _SelectedItemID: 0
   nameTextDisplay: {fileID: 4740774248454122142}
   walkSpeed: 3
   runSpeed: 6
   sprintSpeed: 10
   jumpForce: 2
   gravity: -9.81
-  summonCooldownTime: 2
   mouseSensitivity: 5
   cameraTransform: {fileID: 0}
   cameraPitchMin: -45
@@ -543,10 +544,18 @@ MonoBehaviour:
   petOptions:
   - RawGuidValue: 17e47888c11aa02428697254862ada2c
   - RawGuidValue: 2ca886a566bec5d498e9a71d3a055b11
-  petSpawnPoint: {fileID: 1704520064600993090}
+  itemPrefabs:
+  - RawGuidValue: 3b0f9bec916f5024cb1a6a85acfd8488
+  - RawGuidValue: 3b0f9bec916f5024cb1a6a85acfd8488
+  itemCooldownTime: 15
+  rainStoneIcon: {fileID: 21300000, guid: 7ed2ebb70bec0f74191da08081a1c49b, type: 3}
+  potionIcon: {fileID: 21300000, guid: 7ed2ebb70bec0f74191da08081a1c49b, type: 3}
+  summonCooldownTime: 2
+  shieldCooldownTime: 60
   summonSound: {fileID: 8300000, guid: 21b913a8a5f9ea4439584ef52a0b44fe, type: 3}
   mountSound: {fileID: 8300000, guid: 9e0de85a279eeb148a54b3dec168ff98, type: 3}
   commandSound: {fileID: 8300000, guid: e235640865fe9da4595ef9dfaae6de25, type: 3}
+  playerAvatar: {fileID: 21300000, guid: 9adefedf2229f3f409a27f7fc184d4f6, type: 3}
 --- !u!114 &1321738037178876271
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -710,7 +719,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
   maxHealth: 100
   isPet: 0
+  shieldPrefab: {fileID: 994514592523366973, guid: cd1dd5fd3b07be44798a642e48637ec8, type: 3}
+  shieldOffset: {x: -0.46, y: 0.77, z: -1.29}
+  _IsWet:
+    _value: 0
+  _SpeedMultiplier: 1
   _CurrentHealth: 0
+  _HasShield:
+    _value: 0
 --- !u!1001 &6902354210687704062
 PrefabInstance:
   m_ObjectHideFlags: 0

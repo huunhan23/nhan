@@ -29,7 +29,7 @@
       "DisplayName": "Writing 6097564273297756792.rsp",
       "ActionType": "WriteFile",
       "PayloadOffset": 83,
-      "PayloadLength": 7991,
+      "PayloadLength": 8311,
       "PayloadDebugContentSnippet": "-a=\"E:\\game cua nhan\\thamvong\\",
       "Inputs": [],
       "InputFlags": [],
@@ -491,6 +491,6 @@
   "SharedResources": [],
   "Scanners": [],
   "Identifier": "Library/Bee/1900b0aESkipCompile.dag.json",
-  "PayloadsFile": "E:/game cua nhan/thamvong/My-money/My money/Library/Bee/1900b0aESkipCompile.dag.payloads",
+  "PayloadsFile": "E:/game cua nhan/thamvong/My-money/nhan/My money/Library/Bee/1900b0aESkipCompile.dag.payloads",
   "RelativePathToRoot": "../.."
 }

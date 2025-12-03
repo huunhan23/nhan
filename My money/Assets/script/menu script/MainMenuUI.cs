@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro; // Nếu dùng TextMeshPro
+using Fusion;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -11,6 +12,7 @@ public class MainMenuUI : MonoBehaviour
     [Header("UI Elements")]
     public TMP_InputField nameInput; // Hoặc InputField thường
     public TextMeshProUGUI petNameText; // Hoặc Text thường
+    public Image petIconDisplay;
     
     [Header("Data")]
     public string[] petNames = { "Tê Giác Điện", "Nhện Lửa" }; // Tên hiển thị
@@ -18,14 +20,22 @@ public class MainMenuUI : MonoBehaviour
 
     [Header("Network Reference")]
     public NetworkRunnerHandler networkRunner; // Kéo object _NetworkManager vào đây
-
+[Header("Pet 3D Preview")]
+    public GameObject[] petPrefabs; // Kéo các Prefab Pet (Rhino, Spider...) vào đây
+    public Transform petPreviewSpot; // Kéo cái vị trí "Sân khấu" vào đây
+    
+    private GameObject _currentPetModel; // Biến lưu con pet đang hiện
+    public Sprite[] petIcons;
     void Start()
     {
         // Mặc định hiện Start, ẩn Selection
-        panelStart.SetActive(true);
+      panelStart.SetActive(true);
         panelSelection.SetActive(false);
         
-        UpdatePetUI();
+        // === SỬA Ở ĐÂY: ĐẢM BẢO KHÔNG CÓ PET NÀO HIỆN RA LÚC ĐẦU ===
+        HidePetVisuals(); 
+        
+        // Tuyệt đối KHÔNG gọi UpdatePetUI() ở đây nhé!
     }
 
     // === CÁC HÀM CHO NÚT BẤM ===
@@ -35,6 +45,7 @@ public class MainMenuUI : MonoBehaviour
     {
         panelStart.SetActive(false);
         panelSelection.SetActive(true);
+        UpdatePetUI();
     }
 
     // Nút "Next Pet"
@@ -71,11 +82,82 @@ public class MainMenuUI : MonoBehaviour
 
     // === LOGIC PHỤ ===
 
-    void UpdatePetUI()
+   void UpdatePetUI()
     {
+        // 1. Cập nhật Tên
         if(petNameText) petNameText.text = petNames[selectedPetIndex];
-    }
 
+        // 2. Cập nhật Mô Hình 3D
+        ShowPetModel(selectedPetIndex);
+
+        // 3. Cập nhật Hình ảnh 2D (=== MỚI ===)
+        if (petIconDisplay != null && petIcons != null)
+        {
+            // Đảm bảo index hợp lệ
+            if (selectedPetIndex >= 0 && selectedPetIndex < petIcons.Length)
+            {
+                // Gán hình ảnh tương ứng
+                petIconDisplay.sprite = petIcons[selectedPetIndex];
+                
+                // Nếu có hình thì bật lên, không có (null) thì tắt đi để tránh hiện ô trắng
+                petIconDisplay.enabled = (petIcons[selectedPetIndex] != null);
+            }
+        }
+    }
+    void HidePetVisuals()
+    {
+        // 1. Xóa model 3D
+        if (_currentPetModel != null)
+        {
+            Destroy(_currentPetModel);
+            _currentPetModel = null;
+        }
+
+        // 2. Tắt hình 2D (Icon)
+        if (petIconDisplay != null)
+        {
+            petIconDisplay.enabled = false;
+        }
+        
+        // 3. Xóa chữ tên Pet (cho sạch)
+        if (petNameText != null)
+        {
+            petNameText.text = "";
+        }
+    }
+void ShowPetModel(int index)
+    {
+        // A. Xóa con cũ đi (nếu đang có)
+        if (_currentPetModel != null)
+        {
+            Destroy(_currentPetModel);
+        }
+
+        // B. Kiểm tra dữ liệu
+        if (petPrefabs == null || index < 0 || index >= petPrefabs.Length) return;
+        if (petPreviewSpot == null) return;
+
+        // C. Tạo con mới (Instantiate bình thường, không phải qua mạng)
+        _currentPetModel = Instantiate(petPrefabs[index], petPreviewSpot.position, petPreviewSpot.rotation);
+
+        // D. QUAN TRỌNG: BIẾN NÓ THÀNH "TƯỢNG" (VÔ HIỆU HÓA LOGIC)
+        // Vì đây chỉ là hình ảnh minh họa ở Menu, nó không được phép có AI hay Network
+        
+        // 1. Xóa NetworkObject (để Fusion không báo lỗi)
+        var netObj = _currentPetModel.GetComponent<NetworkObject>();
+        if (netObj) Destroy(netObj);
+
+        // 2. Xóa PetAI (để nó không tìm Player hay chạy lung tung)
+        var ai = _currentPetModel.GetComponent<PetAI>();
+        if (ai) Destroy(ai);
+
+        // 3. Xóa NavMeshAgent (để nó không bị lỗi NavMesh)
+        var agent = _currentPetModel.GetComponent<UnityEngine.AI.NavMeshAgent>();
+        if (agent) Destroy(agent);
+        
+        // 4. (Tùy chọn) Chỉnh Scale to lên cho đẹp nếu cần
+        // _currentPetModel.transform.localScale = Vector3.one * 1.5f;
+    }
     void SaveData()
     {
         string playerName = nameInput.text;

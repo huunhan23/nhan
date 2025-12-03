@@ -1,106 +1,143 @@
 using UnityEngine;
 using UnityEngine.AI;
-using System.Collections.Generic; // Đảm bảo có dòng này
+using System.Collections.Generic;
 using Fusion;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class PetAI :NetworkBehaviour
+public class PetAI : NetworkBehaviour 
 {
-    // === CÁC BIẾN ===
+    // === CÁC BIẾN TRẠNG THÁI ===
     public enum PetState { Following, Attacking, MovingToPlayer, UsingSkill, Mounted, Idle, Dead } 
     
     [Header("Trạng thái hiện tại")]
     public PetState currentState;
-[Header("Skill Cooldowns")]
-    public float skill1CooldownTime = 3.0f; // Hồi chiêu T
-    public float skill2CooldownTime = 5.0f; // Hồi chiêu Y
 
-    // Timer cho từng skill
-    [Networked] private TickTimer Skill1Timer { get; set; }
-    [Networked] private TickTimer Skill2Timer { get; set; }
+    // === CÁC BIẾN CÀI ĐẶT ===
     [Header("Các đối tượng")]
     public Transform player; 
     private Transform currentTarget; 
     [Header("Mounting")]
     public Transform mountPoint; 
-    [Header("Thông số")]
+    
+    [Header("Thông số AI")]
     public float attackRange = 2.0f;     
     public float followDistance = 3.0f;  
     public float leashDistance = 15.0f;  
     public float targetScanRadius = 20f; 
     public float arrivalDistance = 1.5f;
 
+    // === HÌNH ẢNH UI ===
+    [Header("UI Images")]
+    public Sprite petAvatar;    // Ảnh đại diện Pet
+    public Sprite skill1Icon;   // Icon chiêu 1
+    public Sprite skill2Icon;   // Icon chiêu 2
+
+    // === SKILL & COOLDOWN ===
+    [Header("Skill Slots")]
+    public PetSkillBase skill1;
+    public PetSkillBase skill2;
+
+    [Header("Skill Cooldowns")]
+    public float skill1CooldownTime = 3.0f; 
+    public float skill2CooldownTime = 5.0f; 
+
+    // Timer đồng bộ qua mạng
+    [Networked] private TickTimer Skill1Timer { get; set; }
+    [Networked] private TickTimer Skill2Timer { get; set; }
 
     // === BIẾN NỘI BỘ ===
     private NavMeshAgent agent;
+    [HideInInspector] public Animator animator; 
     private AudioSource audioSource;
-    [HideInInspector] public Animator animator;
-    private float currentSpeed = 0f; 
     public float turnSpeed = 10f; 
-[Header("Skill Slots")]
-    public PetSkillBase skill1;
-    public PetSkillBase skill2;
-    void Start()
+
+    // ========================================================================
+    // 1. KHỞI TẠO (DÙNG SPAWNED THAY CHO START)
+    // ========================================================================
+    public override void Spawned()
     {
         agent = GetComponent<NavMeshAgent>();
+        animator = GetComponentInChildren<Animator>();
         audioSource = GetComponent<AudioSource>();
-        
-        animator = GetComponentInChildren<Animator>(); 
-        if(animator == null)
-        {
-            Debug.LogError("Pet không tìm thấy Animator!");
-        }
 
         if (player == null)
         {
-            player = GameObject.FindGameObjectWithTag("Player").transform;
+            GameObject foundPlayer = GameObject.FindGameObjectWithTag("Player");
+            if (foundPlayer != null) player = foundPlayer.transform;
         }
+
         currentState = PetState.Following; 
 
         if (skill1 != null) skill1.Initialize(this);
         if (skill2 != null) skill2.Initialize(this);
+
+        // === GỬI ẢNH CHO UI ===
+        if (Object.HasInputAuthority)
+        {
+            if (GameUIManager.Instance != null)
+            {
+                GameUIManager.Instance.SetupPetUI(petAvatar, skill1Icon, skill2Icon);
+            }
+        }
     }
 
-    void Update()
+    // ========================================================================
+    // 2. CẬP NHẬT LOGIC (FIXED UPDATE NETWORK)
+    // ========================================================================
+    public override void FixedUpdateNetwork()
     {
-        if (player == null || currentState == PetState.Dead) return; // Nếu chết thì không làm gì cả
+        if (!Runner.IsServer) return; // Chỉ Server chạy AI
 
-        // Đây là bộ não (State Machine) của Pet
+        if (player == null || currentState == PetState.Dead) return; 
+
         switch (currentState)
         {
-            case PetState.Following:
-                HandleFollowing();
-                break;
-            case PetState.Attacking:
-                HandleAttacking();
-                break;
-            case PetState.MovingToPlayer:
-                HandleMovingToPlayer();
-                break;
-            case PetState.Mounted:
-                agent.isStopped = true; // Đảm bảo dừng lại
-                break;
-            case PetState.Idle:
-                agent.isStopped = true;
-                break;
-            // (Các state khác)
+            case PetState.Following: HandleFollowing(); break;
+            case PetState.Attacking: HandleAttacking(); break;
+            case PetState.MovingToPlayer: HandleMovingToPlayer(); break;
+            case PetState.Mounted: agent.isStopped = true; break;
+            case PetState.Idle: agent.isStopped = true; break;
+        }
+    }
+
+    // ========================================================================
+    // 3. CẬP NHẬT VISUAL & UI (RENDER)
+    // ========================================================================
+    public override void Render()
+    {
+        // Cập nhật Animation
+        if (animator != null && agent != null)
+        {
+            float currentRealSpeed = agent.velocity.magnitude; 
+            float maxSpeed = agent.speed;
+            float normalizedSpeed = (maxSpeed > 0) ? (currentRealSpeed / maxSpeed) : 0;
+            animator.SetFloat("speed", normalizedSpeed, 0.1f, Time.deltaTime);
         }
 
-        // === PHẦN SỬA ĐỔI ĐỂ SỬA LỖI ANIMATION ===
-        
-        // 1. Lấy tốc độ mong muốn (ví dụ: 3.5)
-        float currentRealSpeed = agent.velocity.magnitude; // Lấy vận tốc thực
-        float maxSpeed = agent.speed;
-        float normalizedSpeed = (maxSpeed > 0) ? (currentRealSpeed / maxSpeed) : 0;
-        
-        animator.SetFloat("speed", normalizedSpeed, 0.1f, Time.deltaTime);
+        // Cập nhật UI Cooldown (Chỉ trên máy chủ nhân)
+        if (Object.HasInputAuthority && GameUIManager.Instance != null)
+        {
+            float remaining1 = 0;
+            if (Skill1Timer.IsRunning && !Skill1Timer.Expired(Runner))
+                remaining1 = (float)Skill1Timer.RemainingTime(Runner);
+            
+            GameUIManager.Instance.UpdateSkillCooldown(1, remaining1, skill1CooldownTime);
+
+            float remaining2 = 0;
+            if (Skill2Timer.IsRunning && !Skill2Timer.Expired(Runner))
+                remaining2 = (float)Skill2Timer.RemainingTime(Runner);
+
+            GameUIManager.Instance.UpdateSkillCooldown(2, remaining2, skill2CooldownTime);
+        }
     }
-    // === CÁC HÀNH VI ===
+
+    // ========================================================================
+    // CÁC HÀNH VI AI
+    // ========================================================================
 
     private void HandleFollowing()
     {
         float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-
         if (distanceToPlayer > followDistance)
         {
             agent.isStopped = false;
@@ -114,35 +151,19 @@ public class PetAI :NetworkBehaviour
 
     private void HandleAttacking()
     {
-        if (currentTarget == null)
-        {
-            currentState = PetState.Following;
-            return;
-        }
+        if (currentTarget == null) { currentState = PetState.Following; return; }
 
         float distanceToTarget = Vector3.Distance(transform.position, currentTarget.position);
-        
-        // Debug Log (nếu cần)
-        // Debug.Log("Đang đuổi " + currentTarget.name + ". Khoảng cách: " + distanceToTarget + " | Tầm đánh: " + attackRange);
 
         if (distanceToTarget <= attackRange)
         {
-            // Đã đến tầm, dừng lại và tấn công
             agent.isStopped = true;
-            
-            animator.SetTrigger("Attack"); // Kích hoạt animation Attack
-            
-            // Sửa lỗi "Cắm đầu"
-            Vector3 lookPosition = new Vector3(currentTarget.position.x, 
-                                               transform.position.y, 
-                                               currentTarget.position.z);
-            // Xoay mượt
-            Quaternion targetRotation = Quaternion.LookRotation(lookPosition - transform.position);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+            animator.SetTrigger("Attack"); 
+            Vector3 lookPos = new Vector3(currentTarget.position.x, transform.position.y, currentTarget.position.z);
+            transform.LookAt(lookPos);
         }
         else
         {
-            // Nếu ngoài tầm, đuổi theo
             agent.isStopped = false;
             agent.SetDestination(currentTarget.position);
         }
@@ -152,179 +173,91 @@ public class PetAI :NetworkBehaviour
     {
         agent.isStopped = false;
         agent.SetDestination(player.position);
-
         if (Vector3.Distance(transform.position, player.position) < arrivalDistance)
         {
             currentState = PetState.Following;
         }
     }
 
-    // === CÁC LỆNH (COMMAND) GỌI TỪ PLAYER ===
-    // (Đây là các hàm đang bị thiếu)
+    // ========================================================================
+    // CÁC LỆNH COMMAND
+    // ========================================================================
 
-    // Lệnh R (Tấn công thường)
     public void CommandAttack()
     {
         if (currentState == PetState.Dead) return;
-        FindNearestTarget(); // <<<< LỖI CỦA BẠN CÓ THỂ BẮT ĐẦU TỪ ĐÂY
-        if (currentTarget != null)
-        {
-            currentState = PetState.Attacking; 
-        }
+        FindNearestTarget(); 
+        if (currentTarget != null) currentState = PetState.Attacking; 
+        Rpc_PlaySoundEffect(3); // Tiếng gầm tấn công
     }
 
-    // Lệnh T (Skill 1)
     public void CommandSkill1()
     {
         if (currentState == PetState.Dead) return;
 
-        // === CHECK COOLDOWN ===
         if (Skill1Timer.ExpiredOrNotRunning(Runner))
         {
-            // Nếu skill tồn tại và thực hiện thành công
             if (skill1 != null)
             {
-                 Rpc_PlayCastSound(1);
+                Rpc_PlayCastSound(1); // Tiếng skill
                 skill1.ExecuteSkill();
-                Rpc_PlaySoundEffect(1);
-               
-                
-                // Bắt đầu đếm ngược
                 Skill1Timer = TickTimer.CreateFromSeconds(Runner, skill1CooldownTime);
             }
-            else
-            {
-                Debug.LogWarning("Pet không có Skill 1!");
-            }
-        }
-        else
-        {
-            Debug.Log("Skill 1 đang hồi! Còn: " + Skill1Timer.RemainingTime(Runner).Value.ToString("F1"));
         }
     }
 
-    // Lệnh Y (Skill 2)
     public void CommandSkill2()
     {
         if (currentState == PetState.Dead) return;
-
-        // === CHECK COOLDOWN ===
+        
         if (Skill2Timer.ExpiredOrNotRunning(Runner))
         {
             if (skill2 != null)
             {
-                Rpc_PlayCastSound(2);
+                Rpc_PlayCastSound(2); 
                 skill2.ExecuteSkill();
-                Rpc_PlaySoundEffect(2);
-                // Bắt đầu đếm ngược
                 Skill2Timer = TickTimer.CreateFromSeconds(Runner, skill2CooldownTime);
             }
-            else
-            {
-                Debug.LogWarning("Pet không có Skill 2!");
-            }
-        }
-        else
-        {
-            Debug.Log("Skill 2 đang hồi! Còn: " + Skill2Timer.RemainingTime(Runner).Value.ToString("F1"));
         }
     }
 
-    // Lệnh E (Đến gần Player)
-    public void CommandMoveToPlayer() // <<<< HÀM BỊ THIẾU
+    public void CommandMoveToPlayer()
     {
         if (currentState == PetState.Dead) return;
         currentState = PetState.MovingToPlayer;
     }
     
-    // Lệnh F (Chuẩn bị được cưỡi)
-    public void CommandMount() // <<<< HÀM BỊ THIẾU
-    {
-        currentState = PetState.Mounted;
-        agent.isStopped = true; 
-        agent.enabled = true; 
-    }
+    public void CommandMount() { currentState = PetState.Mounted; agent.isStopped = true; agent.enabled = true; }
+    public void CommandUnmount() { agent.isStopped = false; currentState = PetState.Following; }
 
-    // Lệnh F (Thả Pet ra)
-    public void CommandUnmount() // <<<< HÀM BỊ THIẾU
-    {
-        agent.isStopped = false; 
-        currentState = PetState.Following;
-    }
+    // ========================================================================
+    // HÀM TIỆN ÍCH
+    // ========================================================================
 
-    // === CÁC HÀM TIỆN ÍCH ===
+    public void MovePet(Vector3 moveVector)
+    {
+        if(agent.enabled) agent.Move(moveVector);
+    }
+    
+    public void SetAgentEnabled(bool status) { agent.enabled = status; }
+    public void SetAgentStopped(bool status) { agent.isStopped = status; }
+    public bool IsPetGrounded() { return agent != null && agent.isOnNavMesh; }
 
-    // Hàm MỚI để PlayerController gọi
-    public void MovePet(Vector3 moveVelocity)
+    private void FindNearestTarget()
     {
-        // agent.Move cho phép di chuyển Agent mà không cần SetDestination
-        // moveVelocity ở đây là: Hướng * Tốc Độ * DeltaTime
-        if (agent.enabled)
-        {
-            agent.Move(moveVelocity);
-            
-            // Xoay Pet theo hướng di chuyển (nếu có di chuyển)
-            if (moveVelocity.sqrMagnitude > 0.1f)
-            {
-                // Chỉ lấy hướng, bỏ qua độ lớn
-                Quaternion lookRotation = Quaternion.LookRotation(moveVelocity.normalized);
-                // Xoay mượt mà
-                transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, turnSpeed * Time.deltaTime);
-            }
-        }
-    }
-
-    // Hàm MỚI để Player kiểm tra
-    public bool IsPetGrounded() // <<<< HÀM BỊ THIẾU
-    {
-        if (agent == null) return false;
-        return agent.isOnNavMesh;
-    }
-public void SetAgentEnabled(bool status)
-    {
-        agent.enabled = status;
-    }
-
-    // Hàm này để các skill ra lệnh Dừng/Tiếp tục
-    public void SetAgentStopped(bool status)
-    {
-        agent.isStopped = status;
-    }
-    private void FindNearestTarget() // <<<< HÀM BỊ THIẾU
-    {
-        // 1. Tạo một danh sách rỗng
         List<GameObject> potentialTargets = new List<GameObject>();
+        potentialTargets.AddRange(GameObject.FindGameObjectsWithTag("Enemy"));
+        potentialTargets.AddRange(GameObject.FindGameObjectsWithTag("Player"));
 
-        // 2. Tìm "Enemy"
-        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
-        potentialTargets.AddRange(enemies);
-
-        // 3. Tìm "Player"
-        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        potentialTargets.AddRange(players);
-
-        // 4. Bắt đầu tìm
         float closestDistance = Mathf.Infinity;
         GameObject nearestTarget = null;
 
         foreach (GameObject target in potentialTargets)
         {
-            // BỎ QUA 1: Nếu là người chơi (chủ)
-            if (target.transform == this.player)
-            {
-                continue; 
-            }
+            if (target.transform == this.player) continue; 
+            if (target == this.gameObject) continue; 
 
-            // BỎ QUA 2: Nếu là BẢN THÂN PET
-            if (target == this.gameObject)
-            {
-                continue; 
-            }
-
-            // 5. Tính toán
             float distance = Vector3.Distance(transform.position, target.transform.position);
-            
-            // 6. So sánh
             if (distance < targetScanRadius && distance < closestDistance)
             {
                 closestDistance = distance;
@@ -332,18 +265,31 @@ public void SetAgentEnabled(bool status)
             }
         }
 
-        // 7. Gán mục tiêu
-        if (nearestTarget != null)
-        {
-            currentTarget = nearestTarget.transform;
-        }
-        else
-        {
-            currentTarget = null;
-        }
+        if (nearestTarget != null) currentTarget = nearestTarget.transform;
+        else currentTarget = null;
     }
 
-    // === HÀM MỚI (ĐỂ DÙNG SAU) ===
+    // ========================================================================
+    // RPCS
+    // ========================================================================
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_PlaySoundEffect(int soundType)
+    {
+        AudioClip clipToPlay = null;
+        if (soundType == 1 && skill1 != null) clipToPlay = skill1.castSound;
+        if (soundType == 2 && skill2 != null) clipToPlay = skill2.castSound;
+        if (audioSource != null && clipToPlay != null) audioSource.PlayOneShot(clipToPlay);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void Rpc_PlayCastSound(int skillIndex)
+    {
+        AudioClip clip = null;
+        if (skillIndex == 1 && skill1 != null) clip = skill1.castSound;
+        if (skillIndex == 2 && skill2 != null) clip = skill2.castSound;
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
+    }
 
     public void TakeDamage(int damage)
     {
@@ -357,35 +303,5 @@ public void SetAgentEnabled(bool status)
         agent.isStopped = true;
         agent.enabled = false; 
         animator.SetBool("isDead", true);
-    }
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_PlaySoundEffect(int soundType)
-    {
-        // soundType: 1 = Skill 1, 2 = Skill 2, 3 = Attack Lệnh
-        AudioClip clipToPlay = null;
-
-        if (soundType == 1 && skill1 != null) clipToPlay = skill1.castSound;
-        if (soundType == 2 && skill2 != null) clipToPlay = skill2.castSound;
-        // Bạn có thể thêm soundType 3 cho tiếng gầm khi tấn công thường
-
-        if (audioSource != null && clipToPlay != null)
-        {
-            audioSource.PlayOneShot(clipToPlay);
-        }
-    }
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
-    public void Rpc_PlayCastSound(int skillIndex)
-    {
-        // skillIndex: 1 = Skill 1, 2 = Skill 2
-        AudioClip clip = null;
-
-        if (skillIndex == 1 && skill1 != null) clip = skill1.castSound;
-        if (skillIndex == 2 && skill2 != null) clip = skill2.castSound;
-
-        if (audioSource != null && clip != null)
-        {
-            // PlayOneShot để có thể đè lên các âm thanh khác nếu cần
-            audioSource.PlayOneShot(clip);
-        }
     }
 }

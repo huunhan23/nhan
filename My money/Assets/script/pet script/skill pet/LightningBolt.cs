@@ -61,10 +61,22 @@ public class LightningBolt : NetworkBehaviour
             Debug.Log("Tia điện trúng: " + other.name);
             
             // Gây sát thương
-            var health = other.GetComponent<HealthComponent>();
+           var health = other.GetComponent<HealthComponent>();
             if(health != null)
             {
-                health.TakeDamage(damage);
+                float finalDamage = damage;
+
+                // === COMBO ĐIỆN + NƯỚC ===
+                if (health.IsWet)
+                {
+                    finalDamage *= 1.15f; // Tăng 15% dame
+                    Debug.Log("Combo Điện + Nước! Dame tăng lên: " + finalDamage);
+                    
+                    // (Tùy chọn) Hiện hiệu ứng giật điện thêm
+                }
+                // ==========================
+
+                health.TakeDamage(finalDamage);
             }
 
             Runner.Despawn(Object); // Hủy đạn

@@ -404,7 +404,7 @@ Transform:
   m_GameObject: {fileID: 1536878781931114322}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.572, z: -0.394}
+  m_LocalPosition: {x: 0.43, y: 1.08, z: 0.65}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1447,8 +1447,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PetAI
   currentState: 0
-  skill1CooldownTime: 3
-  skill2CooldownTime: 5
   player: {fileID: 0}
   mountPoint: {fileID: 32465782496918073}
   attackRange: 2
@@ -1456,10 +1454,15 @@ MonoBehaviour:
   leashDistance: 15
   targetScanRadius: 102.3
   arrivalDistance: 1.5
-  animator: {fileID: 0}
-  turnSpeed: 20.72
+  petAvatar: {fileID: 21300000, guid: 05eb03e2c5964b040ba0ebd8f803bc25, type: 3}
+  skill1Icon: {fileID: 21300000, guid: d0be69777c3ac284bbaf7d7e68ae721f, type: 3}
+  skill2Icon: {fileID: 21300000, guid: ed41236d38d778247983c9f6757da243, type: 3}
   skill1: {fileID: 204342726622077295}
   skill2: {fileID: 6759238427378361352}
+  skill1CooldownTime: 3
+  skill2CooldownTime: 5
+  animator: {fileID: 0}
+  turnSpeed: 20.72
 --- !u!54 &-7867179026109546800
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1690,7 +1693,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HealthComponent
   maxHealth: 100
   isPet: 1
+  shieldPrefab: {fileID: 0}
+  shieldOffset: {x: 0, y: 1, z: 0}
   _CurrentHealth: 2000
+  _HasShield:
+    _value: 0
 --- !u!1 &6382202650815989069
 GameObject:
   m_ObjectHideFlags: 0

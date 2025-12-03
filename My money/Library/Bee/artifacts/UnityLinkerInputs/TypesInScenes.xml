@@ -19,6 +19,7 @@
 		<type fullname="PiUIManager" preserve="nothing"/>
 		<type fullname="PlayerController" preserve="nothing"/>
 		<type fullname="RadialMenuBridge" preserve="nothing"/>
+		<type fullname="RainArea" preserve="nothing"/>
 	</assembly>
 	<assembly fullname="Fusion.Realtime">
 		<type fullname="Fusion.Photon.Realtime.PhotonAppSettings" preserve="nothing"/>
