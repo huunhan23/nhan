@@ -8,6 +8,7 @@
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Assets\Photon\PhotonLibs\WebSocket\websocket-sharp.dll"
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\Assembly-CSharp.dll"
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\Fusion.Unity.dll"
+-a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\PlayFab.dll"
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\Unity.AI.Navigation.dll"
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\Unity.Burst.dll"
 -a="E:\game cua nhan\thamvong\My-money\nhan\My money\Library\ScriptAssemblies\Unity.Collections.dll"

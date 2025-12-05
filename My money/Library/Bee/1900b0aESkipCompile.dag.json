@@ -29,7 +29,7 @@
       "DisplayName": "Writing 6097564273297756792.rsp",
       "ActionType": "WriteFile",
       "PayloadOffset": 83,
-      "PayloadLength": 8311,
+      "PayloadLength": 8402,
       "PayloadDebugContentSnippet": "-a=\"E:\\game cua nhan\\thamvong\\",
       "Inputs": [],
       "InputFlags": [],
@@ -58,6 +58,7 @@
         "Assets/Photon/PhotonLibs/WebSocket/websocket-sharp.dll",
         "Library/ScriptAssemblies/Assembly-CSharp.dll",
         "Library/ScriptAssemblies/Fusion.Unity.dll",
+        "Library/ScriptAssemblies/PlayFab.dll",
         "Library/ScriptAssemblies/Unity.AI.Navigation.dll",
         "Library/ScriptAssemblies/Unity.Burst.dll",
         "Library/ScriptAssemblies/Unity.Collections.dll",
@@ -102,6 +103,7 @@
         "Library/Bee/artifacts/rsp/6097564273297756792.rsp"
       ],
       "InputFlags": [
+        0,
         0,
         0,
         0,
@@ -374,6 +376,9 @@
     },
     {
       "File": "Library/ScriptAssemblies/Fusion.Unity.dll"
+    },
+    {
+      "File": "Library/ScriptAssemblies/PlayFab.dll"
     },
     {
       "File": "Library/ScriptAssemblies/Unity.AI.Navigation.dll"

@@ -299,6 +299,20 @@
         {
             "managedAssemblyName": "Assembly-CSharp.dll",
             "nativeClass": "",
+            "fullManagedTypeName": "PlayFabManager",
+            "moduleName": "",
+            "usedInScenes": []
+        },
+        {
+            "managedAssemblyName": "PlayFab.dll",
+            "nativeClass": "",
+            "fullManagedTypeName": "PlayFabSharedSettings",
+            "moduleName": "",
+            "usedInScenes": []
+        },
+        {
+            "managedAssemblyName": "Assembly-CSharp.dll",
+            "nativeClass": "",
             "fullManagedTypeName": "RadialMenuBridge",
             "moduleName": "",
             "usedInScenes": []

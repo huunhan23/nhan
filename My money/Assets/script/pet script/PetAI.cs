@@ -75,9 +75,14 @@ public class PetAI : NetworkBehaviour
         if (Object.HasInputAuthority)
         {
             if (GameUIManager.Instance != null)
-            {
-                GameUIManager.Instance.SetupPetUI(petAvatar, skill1Icon, skill2Icon);
-            }
+        {
+            // Kiểm tra xem Pet này thuộc về P1 hay P2
+            // (Giả sử Host/PlayerId 1 là P1)
+            bool isP1Pet = (Object.InputAuthority.PlayerId == 1) || (Object.InputAuthority == Runner.LocalPlayer && Runner.IsServer);
+
+            // Gọi hàm setup mới
+            GameUIManager.Instance.SetupPetUI(isP1Pet, petAvatar, skill1Icon, skill2Icon);
+        }
         }
     }
 

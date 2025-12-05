@@ -18,6 +18,7 @@
 		<type fullname="PiUI" preserve="nothing"/>
 		<type fullname="PiUIManager" preserve="nothing"/>
 		<type fullname="PlayerController" preserve="nothing"/>
+		<type fullname="PlayFabManager" preserve="nothing"/>
 		<type fullname="RadialMenuBridge" preserve="nothing"/>
 		<type fullname="RainArea" preserve="nothing"/>
 	</assembly>
@@ -37,6 +38,9 @@
 		<type fullname="Fusion.Statistics.FusionStatsConfig" preserve="nothing"/>
 		<type fullname="Fusion.Statistics.FusionStatsGraphDefault" preserve="nothing"/>
 		<type fullname="Fusion.Statistics.FusionStatsPanelHeader" preserve="nothing"/>
+	</assembly>
+	<assembly fullname="PlayFab">
+		<type fullname="PlayFabSharedSettings" preserve="nothing"/>
 	</assembly>
 	<assembly fullname="Unity.AI.Navigation">
 		<type fullname="Unity.AI.Navigation.NavMeshModifier" preserve="nothing"/>

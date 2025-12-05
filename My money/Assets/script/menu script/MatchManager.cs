@@ -118,6 +118,8 @@ public class MatchManager : NetworkBehaviour
         Rpc_ShowGameOver(winnerId, P1_DamageDealt, P2_DamageDealt);
     }
 
+    // ... (Code cũ) ...
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void Rpc_ShowGameOver(int winnerId, float p1Dmg, float p2Dmg)
     {
@@ -125,5 +127,22 @@ public class MatchManager : NetworkBehaviour
         {
             GameUIManager.Instance.ProcessGameOver(winnerId, p1Dmg, p2Dmg);
         }
+
+        // === PHẦN MỚI: GỬI ĐIỂM LÊN PLAYFAB ===
+        
+        // 1. Xác định mình là ai
+        var runner = FindObjectOfType<Fusion.NetworkRunner>();
+        bool amIPlayer1 = runner.LocalPlayer.PlayerId == 1; 
+
+        // 2. Lấy số dame của MÌNH
+        float myDamage = amIPlayer1 ? p1Dmg : p2Dmg;
+
+        // 3. Gửi lên PlayFab (Làm tròn thành số nguyên int)
+        if (PlayFabManager.Instance != null)
+        {
+            Debug.Log($"Đang gửi điểm lên BXH: {myDamage}");
+            PlayFabManager.Instance.SendLeaderboard(Mathf.RoundToInt(myDamage));
+        }
+        // ======================================
     }
 }

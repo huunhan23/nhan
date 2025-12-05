@@ -106,18 +106,27 @@ public class GameUIManager : MonoBehaviour
 
     // ================== 3. XỬ LÝ SKILL & ITEM & PET UI ==================
 
-    public void SetupPetUI(Sprite avatar, Sprite s1, Sprite s2)
+   public void SetupPetUI(bool isPlayer1, Sprite avatar, Sprite s1, Sprite s2)
     {
-        if (p1PetAvatar) p1PetAvatar.sprite = avatar;
-        if (skill1IconDisplay) skill1IconDisplay.sprite = s1;
-        if (skill2IconDisplay) skill2IconDisplay.sprite = s2;
-
-        if (skill1Overlay) skill1Overlay.fillAmount = 0;
-        if (skill1Text) skill1Text.text = "";
-        if (skill2Overlay) skill2Overlay.fillAmount = 0;
-        if (skill2Text) skill2Text.text = "";
+        if (isPlayer1)
+        {
+            // Gán cho Phe 1 (Bên trái - Máy mình)
+            if (p1PetAvatar) p1PetAvatar.sprite = avatar;
+            if (skill1IconDisplay) skill1IconDisplay.sprite = s1;
+            if (skill2IconDisplay) skill2IconDisplay.sprite = s2;
+            
+            // Reset cooldown P1
+            if (skill1Overlay) skill1Overlay.fillAmount = 0;
+            if (skill2Overlay) skill2Overlay.fillAmount = 0;
+        }
+        else
+        {
+            // Gán cho Phe 2 (Bên phải - Địch)
+            // Bạn cần tạo thêm UI Image cho Skill địch nếu muốn hiện, 
+            // hoặc ít nhất là hiện Avatar Pet địch
+            if (p2PetAvatar) p2PetAvatar.sprite = avatar;
+        }
     }
-
     public void SetupItemUI(Sprite icon)
     {
         if (itemIconDisplay != null) itemIconDisplay.sprite = icon;
@@ -220,28 +229,60 @@ public class GameUIManager : MonoBehaviour
         StartCoroutine(ShowStatsRoutine(p1Dmg, p2Dmg));
     }
 
-    IEnumerator ShowStatsRoutine(float p1Dmg, float p2Dmg)
+   IEnumerator ShowStatsRoutine(float p1Dmg, float p2Dmg)
     {
-        yield return new WaitForSeconds(3.0f);
+        yield return new WaitForSeconds(3.0f); // Chờ 3 giây sau khi hiện Victory
 
+        // 1. Chuyển đổi UI
         if(resultPanel) resultPanel.SetActive(false);
         if(statsPanel) statsPanel.SetActive(true);
 
+        // 2. Hiển thị thông số trận đấu
         if(p1DamageText) p1DamageText.text = "P1 Damage: " + Mathf.RoundToInt(p1Dmg);
         if(p2DamageText) p2DamageText.text = "P2 Damage: " + Mathf.RoundToInt(p2Dmg);
         
+        // 3. === MỚI: GỌI PLAYFAB LẤY BXH ===
+        if (PlayFabManager.Instance != null)
+        {
+            // Gửi điểm của bản thân lên trước
+            // (Logic lấy điểm của mình đã có trong MatchManager, nhưng gọi cập nhật bảng ở đây cho chắc)
+            PlayFabManager.Instance.GetLeaderboard(); 
+        }
+        // ===================================
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
-    void OnBackToMenu()
+  public void OnBackToMenu()
     {
+        // 1. Tìm Runner đang chạy
         var runner = FindObjectOfType<NetworkRunner>();
-        if (runner != null) runner.Shutdown();
-        
-        GameObject networkManager = GameObject.Find("_NetworkManager");
-        if(networkManager) Destroy(networkManager);
+        if (runner != null)
+        {
+            // Tắt mạng
+            runner.Shutdown();
+        }
 
+        // 2. Hủy object _NetworkManager (Vì nó DontDestroyOnLoad)
+        // Nếu không hủy, khi về Menu nó sẽ bị trùng với cái mới -> Lỗi
+        GameObject networkManager = GameObject.Find("_NetworkManager");
+        if (networkManager != null)
+        {
+            Destroy(networkManager);
+        }
+        
+        // 3. Hủy PlayFabManager (Nếu có, để đăng nhập lại từ đầu hoặc reset data)
+        if (PlayFabManager.Instance != null)
+        {
+            Destroy(PlayFabManager.Instance.gameObject);
+        }
+
+        // 4. Mở khóa chuột (Quan trọng: Để về Menu còn bấm được nút)
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        // 5. Chuyển về Scene 0 (Menu)
         SceneManager.LoadScene(0);
     }
 
